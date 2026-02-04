@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8" />
+  <title>Botiga - Club de Pesca Torres de Segre</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Botiga i comandes de roba i accessoris oficials del Club de Pesca Torres de Segre."/>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <nav>
+      <div class="logo">🎣 Club de Pesca Torres de Segre</div>
+      <div class="nav-links">
+        <a href="index.html">Inici</a>
+        <a href="classificacio.html">Classificació</a>
+        <a href="calendari.html">Calendari</a>
+        <a href="normes.html">Normes</a>
+        <a href="botiga.html">Botiga</a>
+        <a href="contacte.html">Contacte</a>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+  <h1>Botiga del club</h1>
+  <p class="section-sub">
+    Roba i accessoris oficials. Les comandes es gestionen per contacte (talles i unitats) i recollida al club o a les jornades.
+  </p>
+
+<div class="card">
+  <h2>Fer comanda</h2>
+  <p class="section-sub">
+    Omple el formulari i et confirmarem la comanda i la recollida.
+  </p>
+
+  <form action="https://formsubmit.co/serhiyzolotyytds@gmail.com" method="POST">
+    <!-- Protecció bàsica -->
+    <input type="hidden" name="_captcha" value="false">
+    <input type="hidden" name="_subject" value="Nova comanda roba club">
+
+    <label>Nom i cognoms</label>
+    <input type="text" name="Nom" required>
+
+    <label>Telèfon</label>
+    <input type="text" name="Telefon" required>
+
+    <label>Correu electrònic</label>
+    <input type="email" name="Email">
+
+    <label>Producte</label>
+    <select name="Producte" required>
+      <option value="">Selecciona…</option>
+      <option>Samarreta tècnica</option>
+      <option>Dessuadora</option>
+      <option>Gorra</option>
+      <option>Pegatina / vinil</option>
+    </select>
+
+    <label>Talla</label>
+    <select name="Talla">
+      <option>XS</option>
+      <option>S</option>
+      <option>M</option>
+      <option>L</option>
+      <option>XL</option>
+      <option>XXL</option>
+    </select>
+
+    <label>Quantitat</label>
+    <input type="number" name="Quantitat" value="1" min="1">
+
+    <label>Observacions</label>
+    <textarea name="Observacions"></textarea>
+
+    <button class="btn primary" type="submit">
+      Enviar comanda
+    </button>
+  </form>
+</div>
+
+    <p class="section-sub" style="margin-top:0.9rem">
+      *Mides orientatives (pot variar segons fabricant).
+    </p>
+  </main>
+
+<footer>
+  Club de Pesca Torres de Segre · Botiga
+</footer>
+
+</body>
+</html>
