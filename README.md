@@ -1,16 +1,23 @@
-# Web Club de Pesca Torres de Segre
+# Club de Pesca Torres de Segre — Web
 
-Arxius estàtics (HTML + CSS).
+Web estàtica (HTML/CSS) per a la lliga del club.
 
-## Publicar gratis amb GitHub Pages
-1. Crea un repositori a GitHub i puja tots els arxius d'aquesta carpeta.
-2. A `Settings` → `Pages`:
-   - Source: `Deploy from a branch`
-   - Branch: `main` / `(root)`
-3. La web quedarà disponible a una URL del tipus:
-   `https://USUARI.github.io/NOM-REPO/`
+## Publicació (GitHub Pages)
+1. Repositori públic
+2. Settings → Pages → Source: *Deploy from a branch* → Branch: `main` → Folder: `/(root)` → Save
+
+La URL quedarà així:
+`https://serhiyzolotyytds-debug.github.io/club-pesca-torres/`
+
+## Contacte
+- Correu del club: **clubpescatorresdesegre@gmail.com**
+- Formularis (contacte i botiga) envien a aquest correu via FormSubmit.
 
 ## Fitxers
-- `index.html`, `classificacio.html`, `calendari.html`, `normes.html`, `botiga.html`, `contacte.html`
+- `index.html` (inici)
+- `classificacio.html` (Google Sheets incrustat)
+- `calendari.html` (llistat d'esdeveniments)
+- `normes.html`
+- `botiga.html`
+- `contacte.html`
 - `styles.css`
-- `favicon.svg`
