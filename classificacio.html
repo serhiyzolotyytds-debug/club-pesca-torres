@@ -62,38 +62,104 @@
 </footer>
 
 <script>
-const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRZr7Rh9h9mnykdAranLV3Z1p3PErucd-qZOBpxYMOqrA-xfAXxmRkL1zKHOWB2vsYSwcXnkf1DR-U/pub?output=csv";
+  // DADES (les que em vas donar)
+  const data = [
+    { pos: 1,  nom: "JANA TEIXIDO",          punts: 92 },
+    { pos: 2,  nom: "PAU BERCERO",          punts: 80 },
+    { pos: 3,  nom: "XAVI MESALLES",        punts: 27 },
+    { pos: 4,  nom: "PAQUITO TORREGUITART", punts: 15 },
+    { pos: 5,  nom: "XIMPI",                punts: 0  },
+    { pos: 6,  nom: "RAMON VILAGINÉS",      punts: 0  },
+    { pos: 7,  nom: "DAVID HERNANDEZ",      punts: 0  },
+    { pos: 8,  nom: "YASSIN RUIZ",          punts: 0  },
+    { pos: 9,  nom: "ANGEL VIZCAINO",       punts: 0  },
+    { pos: 10, nom: "FLORIN CULCEA",        punts: 0  }
+  ];
 
-async function loadData() {
-  const res = await fetch(csvUrl);
-  const text = await res.text();
+  const tbody = document.getElementById("rows");
+  const q = document.getElementById("q");
+  const toggleSort = document.getElementById("toggleSort");
+  const ths = Array.from(document.querySelectorAll("th[data-col]"));
 
-  const rows = text.trim().split("\n").slice(1);
+  let sortMode = "pos"; // pos | punts | nom
+  let sortDir = "asc";  // asc | desc
 
-  return rows.map(r => {
-    const cols = r.split(",");
-    return {
-      pos: Number(cols[0]),
-      nom: (cols[1] || "").replaceAll('"','').trim(),
-      punts: Number(cols[2])
-    };
-  });
-}
+  function render(){
+    const query = q.value.trim().toLowerCase();
 
-let data = [];
+    let rows = data.filter(r => r.nom.toLowerCase().includes(query));
 
-async function init(){
-  try{
-    data = await loadData();
-    render();
-  } catch(e){
-    console.error("Error cargando CSV:", e);
+    rows.sort((a,b) => {
+      let A = a[sortMode], B = b[sortMode];
+
+      // strings
+      if (typeof A === "string") {
+        A = A.toLowerCase(); B = B.toLowerCase();
+        if (A < B) return sortDir === "asc" ? -1 : 1;
+        if (A > B) return sortDir === "asc" ?  1 : -1;
+        return 0;
+      }
+
+      // numbers
+      if (A === B) return 0;
+      return sortDir === "asc" ? (A - B) : (B - A);
+    });
+
+    tbody.innerHTML = rows.map(r => `
+      <tr>
+        <td><strong>${r.pos}</strong></td>
+        <td>${escapeHtml(r.nom)}</td>
+        <td><strong>${r.punts}</strong></td>
+      </tr>
+    `).join("");
   }
-}
 
-init();
+  function escapeHtml(str){
+    return str
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  // Buscar
+  q.addEventListener("input", render);
+
+  // Botón rápido: alterna pos <-> punts
+  toggleSort.addEventListener("click", () => {
+    if (sortMode !== "punts") {
+      sortMode = "punts"; sortDir = "desc";
+      toggleSort.textContent = "Ordena per posició";
+    } else {
+      sortMode = "pos"; sortDir = "asc";
+      toggleSort.textContent = "Ordena per punts";
+    }
+    render();
+  });
+
+  // Click en columnas para ordenar
+  ths.forEach(th => {
+    th.addEventListener("click", () => {
+      const col = th.dataset.col;
+
+      if (sortMode === col) {
+        sortDir = (sortDir === "asc") ? "desc" : "asc";
+      } else {
+        sortMode = col;
+        sortDir = (col === "punts") ? "desc" : "asc";
+      }
+
+      // Texto del botón en función del modo
+      if (sortMode === "punts") toggleSort.textContent = "Ordena per posició";
+      else toggleSort.textContent = "Ordena per punts";
+
+      render();
+    });
+  });
+
+  render();
 </script>
-
 
 </body>
 </html>
