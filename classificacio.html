@@ -1,13 +1,14 @@
 <!DOCTYPE html>
 <html lang="ca">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Classificació - Club de Pesca Torres de Segre</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Classificació general de la lliga del Club de Pesca Torres de Segre (actualitzada)."/>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Classificació oficial del Club de Pesca Torres de Segre."/>
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-<link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css" />
 </head>
+
 <body>
 
 <header>
@@ -20,55 +21,79 @@
         <a href="calendari.html">Calendari</a>
         <a href="normes.html">Normes</a>
         <a href="botiga.html">Botiga</a>
+        <a href="galeria.html">Galeria</a>
         <a href="contacte.html">Contacte</a>
       </div>
     </nav>
   </div>
 </header>
 
-<main>
-  <h1>Classificació general</h1>
-  <p class="descripcio">
-    Resultats actualitzats automàticament.  
-    Qualsevol canvi al full oficial es reflecteix aquí en temps real.
-  </p>
+<main class="container">
+  <div class="card">
+    <div class="table-top">
+      <div>
+        <h1>Classificació final</h1>
+        <p class="descripcio">Punts totals acumulats (fi de temporada).</p>
+      </div>
 
-  <section class="iframe-wrapper">
-    <iframe
-      src="https://docs.google.com/spreadsheets/d/e/2PACX-1vRDvXaXG00x4ToVoHSnPRzfQXWKitQneF6KVwAQwoCr-twC4DuRvYRBG8tyQhjaGH0ZnmM8KpRWw47o/pubhtml?widget=true&headers=false"
-      loading="lazy"
-      referrerpolicy="no-referrer"
-    ></iframe>
-  </section>
+      <div class="table-actions">
+        <input id="q" type="search" placeholder="Cercar pescador..." aria-label="Cercar" />
+        <button id="toggleSort" title="Ordenar per punts / posició">Ordena per punts</button>
+      </div>
+    </div>
+
+    <div class="table-wrap" role="region" aria-label="Taula de classificació" tabindex="0">
+      <table class="pro-table" id="table">
+        <thead>
+          <tr>
+            <th data-col="pos">P</th>
+            <th data-col="nom">Nom</th>
+            <th data-col="punts">Puntuació final</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </div>
 </main>
 
+<footer>
+  Club de Pesca Torres de Segre · Lliga Individual 2025
+</footer>
 
 <script>
-  // 👉 POSA AQUÍ LA TEVA URL DE GOOGLE SHEETS (CSV)
-  const url = "https://docs.google.com/spreadsheets/d/1si22L3m6MVCCF9WRcnuigefECz2tl5lOOoEJOGywAVI/edit?usp=sharing";
+const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRZr7Rh9h9mnykdAranLV3Z1p3PErucd-qZOBpxYMOqrA-xfAXxmRkL1zKHOWB2vsYSwcXnkf1DR-U/pub?output=csv";
 
-  fetch(url)
-    .then(res => res.text())
-    .then(data => {
-      const files = data.split("\n").map(row => row.split(","));
+async function loadData() {
+  const res = await fetch(csvUrl);
+  const text = await res.text();
 
-      const tbody = document.querySelector("#taula tbody");
-      tbody.innerHTML = "";
+  const rows = text.trim().split("\n").slice(1);
 
-      files.forEach((fila, index) => {
-        if (index === 0) return; // Saltar títols si ja estan a la taula
+  return rows.map(r => {
+    const cols = r.split(",");
+    return {
+      pos: Number(cols[0]),
+      nom: (cols[1] || "").replaceAll('"','').trim(),
+      punts: Number(cols[2])
+    };
+  });
+}
 
-        const tr = document.createElement("tr");
-        fila.forEach(camp => {
-          const td = document.createElement("td");
-          td.textContent = camp;
-          tr.appendChild(td);
-        });
+let data = [];
 
-        tbody.appendChild(tr);
-      });
-    });
+async function init(){
+  try{
+    data = await loadData();
+    render();
+  } catch(e){
+    console.error("Error cargando CSV:", e);
+  }
+}
+
+init();
 </script>
+
 
 </body>
 </html>

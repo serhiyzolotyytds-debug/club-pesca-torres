@@ -20,6 +20,7 @@
         <a href="calendari.html" class="active">Calendari</a>
         <a href="normes.html">Normes</a>
         <a href="botiga.html">Botiga</a>
+        <a href="galeria.html">Galeria</a>
         <a href="contacte.html">Contacte</a>
       </div>
     </nav>
@@ -65,11 +66,13 @@
 
   events.forEach(ev => {
     const card = document.createElement("article");
-    card.className = "event";
+    card.className = `event event--${ev.tipus}`;
     card.innerHTML = `
-      <h2>${ev.titol} · ${ev.lloc}</h2>
+      <div class="event-head">
+        <h2>${ev.titol} · ${ev.lloc}</h2>
+        <span class="badge">${ev.tipus}</span>
+      </div>
       <p class="event-meta">${fmt(ev.inici)} → ${fmt(ev.fi)} · Categoria: ${ev.categoria}</p>
-      <p style="margin:0;">Tipus: <strong>${ev.tipus}</strong></p>
     `;
     container.appendChild(card);
   });

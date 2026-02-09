@@ -7,7 +7,7 @@
 
 body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  background: #0b1020;
+  background: linear-gradient(180deg, #0e1a24 0%, #0f2a1d 100%);
   color: #f5f5f5;
   line-height: 1.6;
 }
@@ -97,10 +97,97 @@ h1 span {
   margin-bottom: 0.2rem;
 }
 
+.event-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap: 0.8rem;
+}
+
+.badge{
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.06);
+  white-space: nowrap;
+}
+
+/* Colors per tipus d'esdeveniment */
+.event{
+  border-left: 4px solid rgba(255,255,255,0.12);
+}
+.event--OPEN{ border-left-color:#4ade80; }
+.event--SOCIAL{ border-left-color:#22d3ee; }
+.event--FESTA{ border-left-color:#fbbf24; }
+.event--FINAL{ border-left-color:#a78bfa; }
+
 .event-meta {
   font-size: 0.85rem;
   color: #9ca3af;
   margin-bottom: 0.4rem;
+}
+
+/* ===== TAULA CLASSIFICACIÓ (PRO) ===== */
+.table-top{
+  display:flex;
+  justify-content:space-between;
+  gap: 1rem;
+  align-items:flex-end;
+  flex-wrap:wrap;
+}
+
+.table-actions{
+  display:flex;
+  gap: 0.6rem;
+  align-items:center;
+  flex-wrap:wrap;
+}
+
+.table-actions input[type="search"]{
+  width: 260px;
+  max-width: 100%;
+}
+
+.table-wrap{
+  margin-top: 1rem;
+  overflow:auto;
+  border-radius: 0.8rem;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(0,0,0,0.12);
+}
+
+.pro-table{
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 640px;
+}
+
+.pro-table th,
+.pro-table td{
+  padding: 0.75rem 0.8rem;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  text-align: left;
+  font-size: 0.92rem;
+}
+
+.pro-table th{
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: rgba(10, 15, 28, 0.95);
+  cursor: pointer;
+  user-select: none;
+}
+
+.pro-table tr:hover td{
+  background: rgba(255,255,255,0.03);
+}
+
+.pro-table td{
+  color: #e5e7eb;
 }
 
 /* ===== CLASSIFICACIÓ (IFRAME) ===== */
@@ -175,4 +262,100 @@ footer {
   .nav-links a { margin-left: 0.8rem; }
   .iframe-wrapper iframe { height: 560px; }
   main { padding: 1.5rem 1rem 2.5rem; }
+}
+
+
+/* ===== HERO (INICI) ===== */
+.hero{
+  position: relative;
+  border-radius: 1rem;
+  overflow: hidden;
+  min-height: 320px;
+  display: flex;
+  align-items: flex-end;
+  padding: 2rem;
+  border: 1px solid rgba(255,255,255,0.1);
+  background-size: cover;
+  background-position: center;
+}
+.hero::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background: linear-gradient(180deg, rgba(0,0,0,0.25), rgba(0,0,0,0.75));
+}
+.hero-content{position:relative; max-width: 700px;}
+.hero h1{margin:0 0 0.6rem;}
+.hero p{margin:0; color:#e5e7eb;}
+.hero .hero-actions{margin-top:1rem; display:flex; gap:0.7rem; flex-wrap:wrap;}
+.btn{display:inline-block; padding:0.6rem 1rem; border-radius:0.5rem; text-decoration:none; font-weight:700;}
+.btn.primary{background: linear-gradient(90deg, #22d3ee, #4ade80); color:#081018;}
+.btn.ghost{border:1px solid rgba(255,255,255,0.25); color:#fff;}
+
+/* ===== GALERIA ===== */
+.gallery-grid{
+  display:grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 0.9rem;
+  margin-top: 1rem;
+}
+.gallery-item{
+  grid-column: span 4;
+  border-radius: 0.8rem;
+  overflow:hidden;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.03);
+}
+.gallery-item a{display:block; color:inherit; text-decoration:none;}
+.gallery-item img{
+  width:100%;
+  height: 240px;
+  object-fit: cover;
+  display:block;
+}
+.gallery-caption{
+  padding:0.75rem 0.9rem;
+  font-size:0.9rem;
+  color:#e5e7eb;
+}
+
+/* Lightbox */
+.lightbox{
+  position:fixed;
+  inset:0;
+  background: rgba(0,0,0,0.85);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding: 1.5rem;
+  z-index: 50;
+}
+.lightbox.open{display:flex;}
+.lightbox img{
+  max-width: 1100px;
+  width: 100%;
+  max-height: 85vh;
+  object-fit: contain;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(255,255,255,0.15);
+}
+.lightbox .close{
+  position:absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.2);
+  color:#fff;
+  padding: 0.45rem 0.7rem;
+  border-radius: 999px;
+  cursor:pointer;
+}
+
+@media (max-width: 900px){
+  .gallery-item{grid-column: span 6;}
+}
+@media (max-width: 600px){
+  .hero{min-height: 280px; padding: 1.25rem;}
+  .gallery-item{grid-column: span 12;}
+  .gallery-item img{height: 220px;}
 }
