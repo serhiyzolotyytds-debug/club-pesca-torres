@@ -64,31 +64,64 @@
 <script>
 const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRZr7Rh9h9mnykdAranLV3Z1p3PErucd-qZOBpxYMOqrA-xfAXxmRkL1zKHOWB2vsYSwcXnkf1DR-U/pub?output=csv";
 
+const tbody = document.getElementById("rows");
+const q = document.getElementById("q");
+const toggleSort = document.getElementById("toggleSort");
+
+let data = [];
+let sortByPoints = false;
+
+function render(){
+  const query = (q.value || "").toLowerCase().trim();
+
+  let rows = data.filter(r => (r.nom || "").toLowerCase().includes(query));
+
+  rows.sort((a,b) => {
+    if (sortByPoints) return (b.punts - a.punts) || (a.pos - b.pos);
+    return a.pos - b.pos;
+  });
+
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td><strong>${r.pos}</strong></td>
+      <td>${(r.nom || "").replaceAll('"','')}</td>
+      <td><strong>${r.punts}</strong></td>
+    </tr>
+  `).join("");
+}
+
 async function loadData() {
-  const res = await fetch(csvUrl);
+  const res = await fetch(csvUrl, { cache: "no-store" }); // evita caché fuerte
   const text = await res.text();
 
-  const rows = text.trim().split("\n").slice(1); // quitamos cabecera
+  const rows = text.trim().split("\n").slice(1);
 
   return rows.map(r => {
     const cols = r.split(",");
     return {
-      pos: parseInt(cols[0]),
-      nom: cols[1],
-      punts: parseInt(cols[2])
+      pos: Number(cols[0]),
+      nom: (cols[1] || "").trim(),
+      punts: Number(cols[2])
     };
   });
 }
-
-let data = [];
 
 async function init(){
   data = await loadData();
   render();
 }
 
+q.addEventListener("input", render);
+
+toggleSort.addEventListener("click", () => {
+  sortByPoints = !sortByPoints;
+  toggleSort.textContent = sortByPoints ? "Ordena per posició" : "Ordena per punts";
+  render();
+});
+
 init();
 </script>
+
 
 
 </body>
