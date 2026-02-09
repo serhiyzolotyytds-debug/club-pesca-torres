@@ -359,3 +359,19 @@ footer {
   .gallery-item{grid-column: span 12;}
   .gallery-item img{height: 220px;}
 }
+/* FIX tabla: que se vea como tabla de verdad */
+.pro-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.pro-table th, .pro-table td {
+  padding: 12px 14px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.pro-table th:nth-child(1), .pro-table td:nth-child(1) { width: 70px; }
+.pro-table th:nth-child(2), .pro-table td:nth-child(2) { width: auto; }
+.pro-table th:nth-child(3), .pro-table td:nth-child(3) { width: 170px; text-align: right; }
