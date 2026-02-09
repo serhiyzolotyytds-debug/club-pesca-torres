@@ -71,6 +71,39 @@ const toggleSort = document.getElementById("toggleSort");
 let data = [];
 let sortByPoints = false;
 
+// Parser CSV (respecta cometes i detecta separador)
+function parseCSV(text){
+  const lines = text.replace(/\r/g, "").trim().split("\n");
+  if (!lines.length) return [];
+
+  // detecta separador: coma o punt i coma
+  const header = lines[0];
+  const sep = (header.split(";").length > header.split(",").length) ? ";" : ",";
+
+  const parseLine = (line) => {
+    const out = [];
+    let cur = "", inQ = false;
+    for (let i=0;i<line.length;i++){
+      const ch = line[i];
+      if (ch === '"') inQ = !inQ;
+      else if (ch === sep && !inQ){ out.push(cur); cur=""; }
+      else cur += ch;
+    }
+    out.push(cur);
+    return out.map(s => s.replaceAll('"','').trim());
+  };
+
+  const rows = lines.slice(1).map(parseLine);
+
+  return rows
+    .filter(cols => cols.some(c => c !== "")) // elimina línies buides
+    .map(cols => ({
+      pos: Number(cols[0]) || 0,
+      nom: (cols[1] || "").trim(),
+      punts: Number(cols[2]) || 0
+    }));
+}
+
 function render(){
   const query = (q.value || "").toLowerCase().trim();
 
@@ -81,34 +114,45 @@ function render(){
     return a.pos - b.pos;
   });
 
+  if (!rows.length){
+    tbody.innerHTML = `<tr><td colspan="3" style="padding:14px;opacity:.8">
+      No hi ha dades (revisa que el full estigui publicat i el CSV sigui accessible).
+    </td></tr>`;
+    return;
+  }
+
   tbody.innerHTML = rows.map(r => `
     <tr>
       <td><strong>${r.pos}</strong></td>
-      <td>${(r.nom || "").replaceAll('"','')}</td>
+      <td>${escapeHtml(r.nom)}</td>
       <td><strong>${r.punts}</strong></td>
     </tr>
   `).join("");
 }
 
-async function loadData() {
-  const res = await fetch(csvUrl, { cache: "no-store" }); // evita caché fuerte
-  const text = await res.text();
-
-  const rows = text.trim().split("\n").slice(1);
-
-  return rows.map(r => {
-    const cols = r.split(",");
-    return {
-      pos: Number(cols[0]),
-      nom: (cols[1] || "").trim(),
-      punts: Number(cols[2])
-    };
-  });
+function escapeHtml(str){
+  return String(str)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
 }
 
 async function init(){
-  data = await loadData();
-  render();
+  try{
+    const res = await fetch(csvUrl, { cache: "no-store" });
+    if(!res.ok) throw new Error("HTTP " + res.status);
+
+    const text = await res.text();
+    data = parseCSV(text);
+    render();
+  } catch(e){
+    console.error("Error carregant CSV:", e);
+    tbody.innerHTML = `<tr><td colspan="3" style="padding:14px;color:#ffb3b3">
+      Error carregant dades del full (mira la consola F12). ${escapeHtml(e.message)}
+    </td></tr>`;
+  }
 }
 
 q.addEventListener("input", render);
@@ -119,8 +163,12 @@ toggleSort.addEventListener("click", () => {
   render();
 });
 
+// recàrrega automàtica cada 2 minuts (opcional)
+setInterval(init, 120000);
+
 init();
 </script>
+
 
 
 
