@@ -40,6 +40,8 @@
         <input id="q" type="search" placeholder="Cercar pescador..." aria-label="Cercar" />
         <button id="toggleSort" class="btn-soft" title="Ordenar per punts / posició">Ordena per punts</button>
       </div>
+      <select id="sheetSelect" class="sheet-select">
+      </select>
     </div>
 
     <div class="notice" id="status" aria-live="polite"></div>
@@ -86,7 +88,34 @@ const SHEETS = [
 function csvUrlFor(gid){
   return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}`;
 }
+const select = document.getElementById("sheetSelect");
 
+// Omplir el desplegable
+SHEETS.forEach((s, i) => {
+  const opt = document.createElement("option");
+  opt.value = s.gid;
+  opt.textContent = s.name;
+  if(i === 0) opt.selected = true;
+  select.appendChild(opt);
+});
+
+// Quan canvies de full
+select.addEventListener("change", () => {
+  loadAndRender(select.value);
+});
+
+// Carregar el primer full
+loadAndRender(select.value);
+
+async function loadAndRender(gid){
+  const url = csvUrlFor(gid);
+
+  const res = await fetch(url);
+  const text = await res.text();
+
+  // ⚠️ Aquí has de cridar la teva funció que ja pinta la taula
+  render(text);
+}
 
 /** ====== CSV PARSER (sense llibreries) ====== */
 function parseCSV(text){
