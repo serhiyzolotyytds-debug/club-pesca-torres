@@ -658,3 +658,23 @@ footer {
   .hero-pro{ min-height: 520px; padding: 2.2rem 1rem; }
   .hero-actions{ justify-content:center; }
 }
+.hero-pro{
+  position: relative;
+  border-radius: 1rem;
+  overflow: hidden;
+
+  min-height: 560px;
+  padding: 4rem 2rem;
+
+  display: flex;
+  align-items: center;
+
+  background:
+    linear-gradient(
+      rgba(0,0,0,0.55),
+      rgba(0,0,0,0.85)
+    ),
+    url("hero_accio_lliga.jpg") center / cover no-repeat;
+
+  border: 1px solid rgba(255,255,255,0.1);
+}
