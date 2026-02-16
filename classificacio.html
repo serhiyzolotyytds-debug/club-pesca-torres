@@ -303,45 +303,6 @@ async function loadData(gid){
   return data;
 }
 
-
-  // Defineix columnes visibles en ordre (estil “lliga”)
-  const visible = [
-    {key:"pos", label:"P"},
-    {key:"nom", label:"NOM"},
-    {key:"punts", label:"PUNTS"}
-  ];
-
-  // Afegim opcionalment la resta si existeixen al full
-  const extraOrder = [
-    {key:"coeficient", label:"COEF."},
-    {key:"j", label:"J"},
-    {key:"g", label:"G"},
-    {key:"e", label:"E"},
-    {key:"p", label:"P"},
-    {key:"gf", label:"F"},
-    {key:"gc", label:"C"},
-    {key:"ultims", label:"ÚLTIMS"}
-  ];
-  for (const ex of extraOrder){
-    if (colIndex[ex.key] != null) visible.push(ex);
-  }
-
-  // Construeix dades normalitzades
-  const data = body.map(r => {
-    const obj = {};
-    for (const col of visible){
-      const i = colIndex[col.key];
-      obj[col.key] = (i != null ? (r[i] ?? "") : "");
-    }
-    obj.posNum = toNumber(obj.pos);
-    obj.puntsNum = toNumber(obj.punts);
-    return obj;
-  }).filter(o => String(o.nom || "").trim() !== "");
-
-  state.columns = visible;
-  return data;
-}
-
 function buildHead(){
   const tr = document.createElement("tr");
   for (const col of state.columns){
