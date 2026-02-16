@@ -29,7 +29,7 @@
 </header>
 
 <main class="container">
-  <div class="card">
+  <section class="card">
     <div class="table-top">
       <div>
         <h1>Classificació final</h1>
@@ -38,23 +38,30 @@
 
       <div class="table-actions">
         <input id="q" type="search" placeholder="Cercar pescador..." aria-label="Cercar" />
-        <button id="toggleSort" title="Ordenar per punts / posició">Ordena per punts</button>
+        <button id="toggleSort" class="btn-soft" title="Ordenar per punts / posició">Ordena per punts</button>
       </div>
     </div>
 
+    <div class="notice" id="status" aria-live="polite"></div>
+
     <div class="table-wrap" role="region" aria-label="Taula de classificació" tabindex="0">
-      <table class="pro-table" id="table">
-        <thead>
-          <tr>
-            <th data-col="pos">P</th>
-            <th data-col="nom">Nom</th>
-            <th data-col="punts">Puntuació final</th>
-          </tr>
-        </thead>
+      <table class="pro-table league-table" id="table">
+        <thead id="thead"></thead>
         <tbody id="rows"></tbody>
       </table>
     </div>
-  </div>
+  </section>
+
+  <section class="card tips">
+    <h2>Si et surt “HTTP 404”</h2>
+    <ol>
+      <li>Comparteix el Google Sheets com a <strong>“Qualsevol amb l’enllaç”</strong> (mínim lectura).</li>
+      <li>Fes servir l’URL CSV amb <code>gviz</code> (més estable):<br/>
+        <code>https://docs.google.com/spreadsheets/d/&lt;SHEET_ID&gt;/gviz/tq?tqx=out:csv&amp;gid=&lt;GID&gt;</code>
+      </li>
+    </ol>
+    <p class="muted">Aquesta pàgina ja ve preparada per llegir el teu full amb ID i GID.</p>
+  </section>
 </main>
 
 <footer>
@@ -62,115 +69,321 @@
 </footer>
 
 <script>
-const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRZr7Rh9h9mnykdAranLV3Z1p3PEruCd-qzOBpxYMOqrA-xfAXxmRkL1zKHOWB2vsYSwcXnkf1DR-U/pub?output=csv";
+/** ====== CONFIG ======
+ *  Posa aquí el teu Sheet ID i el GID de la pestanya (ja te'l deixo preparat).
+ */
+const SHEET_ID = "19E7UR9NOwXsJEPvtA0gyBtxeqC-T6-fML9LzM7mL53Q";
+const GID = "270978965";
+const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID}`;
 
-const tbody = document.getElementById("rows");
-const q = document.getElementById("q");
-const toggleSort = document.getElementById("toggleSort");
-
-let data = [];
-let sortByPoints = false;
-
-// Parser CSV (respecta cometes i detecta separador)
+/** ====== CSV PARSER (sense llibreries) ====== */
 function parseCSV(text){
-  const lines = text.replace(/\r/g, "").trim().split("\n");
-  if (!lines.length) return [];
+  const rows = [];
+  let row = [];
+  let cur = "";
+  let inQuotes = false;
 
-  // detecta separador: coma o punt i coma
-  const header = lines[0];
-  const sep = (header.split(";").length > header.split(",").length) ? ";" : ",";
+  for (let i = 0; i < text.length; i++){
+    const c = text[i];
+    const next = text[i+1];
 
-  const parseLine = (line) => {
-    const out = [];
-    let cur = "", inQ = false;
-    for (let i=0;i<line.length;i++){
-      const ch = line[i];
-      if (ch === '"') inQ = !inQ;
-      else if (ch === sep && !inQ){ out.push(cur); cur=""; }
-      else cur += ch;
+    if (c === '"' ){
+      if (inQuotes && next === '"'){ // cometes escapades
+        cur += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
     }
-    out.push(cur);
-    return out.map(s => s.replaceAll('"','').trim());
-  };
 
-  const rows = lines.slice(1).map(parseLine);
+    if (!inQuotes && c === ','){
+      row.push(cur);
+      cur = "";
+      continue;
+    }
 
-  return rows
-    .filter(cols => cols.some(c => c !== "")) // elimina línies buides
-    .map(cols => ({
-      pos: Number(cols[0]) || 0,
-      nom: (cols[1] || "").trim(),
-      punts: Number(cols[2]) || 0
-    }));
+    if (!inQuotes && (c === '\n' || c === '\r')){
+      if (c === '\r' && next === '\n') i++; // CRLF
+      row.push(cur);
+      cur = "";
+      // Evita afegir files buides finals
+      if (row.some(v => String(v).trim() !== "")) rows.push(row);
+      row = [];
+      continue;
+    }
+
+    cur += c;
+  }
+
+  // última cel·la
+  row.push(cur);
+  if (row.some(v => String(v).trim() !== "")) rows.push(row);
+
+  return rows;
+}
+
+function normalizeHeader(h){
+  return String(h || "")
+    .trim()
+    .toLowerCase()
+    .replaceAll("à","a").replaceAll("á","a")
+    .replaceAll("è","e").replaceAll("é","e")
+    .replaceAll("í","i")
+    .replaceAll("ò","o").replaceAll("ó","o")
+    .replaceAll("ú","u")
+    .replaceAll("·","")
+    .replaceAll(".","")
+    .replaceAll("-"," ")
+    .replaceAll("_"," ")
+    .replace(/\s+/g," ");
+}
+
+function toNumber(v){
+  const n = Number(String(v ?? "").replace(",", ".").trim());
+  return Number.isFinite(n) ? n : null;
+}
+
+const state = {
+  raw: [],
+  filtered: [],
+  sortBy: "pos", // "pos" o "punts"
+  columns: [] // {key,label}
+};
+
+const elRows = document.getElementById("rows");
+const elHead = document.getElementById("thead");
+const elQ = document.getElementById("q");
+const elToggle = document.getElementById("toggleSort");
+const elStatus = document.getElementById("status");
+
+function setStatus(msg, type="info"){
+  elStatus.textContent = msg;
+  elStatus.className = "notice notice--" + type;
+}
+
+async function loadData(){
+  setStatus("Carregant classificació…", "info");
+  const res = await fetch(csvUrl, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const text = await res.text();
+
+  const table = parseCSV(text);
+  if (!table.length) return [];
+
+  const headers = table[0];
+  const body = table.slice(1);
+
+  // Map de columnes pel nom
+  const idx = new Map();
+  headers.forEach((h, i) => idx.set(normalizeHeader(h), i));
+
+  // Claus “típiques” (pots posar-les al teu full amb aquests noms o semblants)
+  const candidates = [
+    { key:"pos", labels:["p","pos","posicio","posicio final","posició","posició final"], fallbackIndex:0 },
+    { key:"nom", labels:["nom","pescador","equip","equips","participant"], fallbackIndex:1 },
+    { key:"punts", labels:["punts","puntuacio","puntuacio final","puntuació","puntuació final","total"], fallbackIndex:2 },
+    { key:"coeficient", labels:["coeficient","coef","coef."], optional:true },
+    { key:"j", labels:["j","partits","pj"], optional:true },
+    { key:"g", labels:["g","guanyats","pg"], optional:true },
+    { key:"e", labels:["e","empats","pe"], optional:true },
+    { key:"p", labels:["p","perduts","pp"], optional:true },
+    { key:"gf", labels:["gf","f","gols a favor","favor"], optional:true },
+    { key:"gc", labels:["gc","c","gols en contra","contra"], optional:true },
+    { key:"ultims", labels:["ultims","últims","forma","ultims 5","últims 5"], optional:true }
+  ];
+
+  function findIndexFor(c){
+    for (const l of c.labels){
+      const k = normalizeHeader(l);
+      if (idx.has(k)) return idx.get(k);
+    }
+    // fallback per pos/nom/punts si el full no té capçalera clara
+    if (c.fallbackIndex != null && c.fallbackIndex < headers.length) return c.fallbackIndex;
+    return null;
+  }
+
+  const colIndex = {};
+  for (const c of candidates){
+    const i = findIndexFor(c);
+    if (i == null){
+      if (!c.optional) throw new Error("No trobo les columnes mínimes (pos/nom/punts) al Google Sheets.");
+    } else {
+      colIndex[c.key] = i;
+    }
+  }
+
+  // Defineix columnes visibles en ordre (estil “lliga”)
+  const visible = [
+    {key:"pos", label:"P"},
+    {key:"nom", label:"NOM"},
+    {key:"punts", label:"PUNTS"}
+  ];
+
+  // Afegim opcionalment la resta si existeixen al full
+  const extraOrder = [
+    {key:"coeficient", label:"COEF."},
+    {key:"j", label:"J"},
+    {key:"g", label:"G"},
+    {key:"e", label:"E"},
+    {key:"p", label:"P"},
+    {key:"gf", label:"F"},
+    {key:"gc", label:"C"},
+    {key:"ultims", label:"ÚLTIMS"}
+  ];
+  for (const ex of extraOrder){
+    if (colIndex[ex.key] != null) visible.push(ex);
+  }
+
+  // Construeix dades normalitzades
+  const data = body.map(r => {
+    const obj = {};
+    for (const col of visible){
+      const i = colIndex[col.key];
+      obj[col.key] = (i != null ? (r[i] ?? "") : "");
+    }
+    obj.posNum = toNumber(obj.pos);
+    obj.puntsNum = toNumber(obj.punts);
+    return obj;
+  }).filter(o => String(o.nom || "").trim() !== "");
+
+  state.columns = visible;
+  return data;
+}
+
+function buildHead(){
+  const tr = document.createElement("tr");
+  for (const col of state.columns){
+    const th = document.createElement("th");
+    th.textContent = col.label;
+    if (col.key === "pos" || col.key === "punts"){
+      th.classList.add("is-sortable");
+      th.title = "Clica per ordenar";
+      th.addEventListener("click", () => {
+        state.sortBy = (col.key === "pos") ? "pos" : "punts";
+        updateToggleText();
+        render();
+      });
+    }
+    tr.appendChild(th);
+  }
+  elHead.innerHTML = "";
+  const theadRow = document.createElement("thead");
+  theadRow.appendChild(tr);
+  // Manté l'estructura: <thead id="thead"> conté <tr>...
+  elHead.appendChild(tr);
+}
+
+function applyFilter(){
+  const q = elQ.value.trim().toLowerCase();
+  if (!q){
+    state.filtered = [...state.raw];
+    return;
+  }
+  state.filtered = state.raw.filter(r => String(r.nom || "").toLowerCase().includes(q));
+}
+
+function applySort(){
+  const by = state.sortBy;
+  const arr = [...state.filtered];
+
+  if (by === "punts"){
+    arr.sort((a,b) => (b.puntsNum ?? -Infinity) - (a.puntsNum ?? -Infinity));
+  } else {
+    arr.sort((a,b) => (a.posNum ?? Infinity) - (b.posNum ?? Infinity));
+  }
+
+  // Recalcula posició si ordenem per punts
+  if (by === "punts"){
+    arr.forEach((r, i) => { r._renderPos = i + 1; });
+  } else {
+    arr.forEach(r => { r._renderPos = r.posNum ?? ""; });
+  }
+
+  state.filtered = arr;
 }
 
 function render(){
-  const query = (q.value || "").toLowerCase().trim();
+  applyFilter();
+  applySort();
 
-  let rows = data.filter(r => (r.nom || "").toLowerCase().includes(query));
+  elRows.innerHTML = "";
 
-  rows.sort((a,b) => {
-    if (sortByPoints) return (b.punts - a.punts) || (a.pos - b.pos);
-    return a.pos - b.pos;
-  });
+  for (const r of state.filtered){
+    const tr = document.createElement("tr");
 
-  if (!rows.length){
-    tbody.innerHTML = `<tr><td colspan="3" style="padding:14px;opacity:.8">
-      No hi ha dades (revisa que el full estigui publicat i el CSV sigui accessible).
-    </td></tr>`;
-    return;
+    for (const col of state.columns){
+      const td = document.createElement("td");
+
+      if (col.key === "pos"){
+        td.textContent = r._renderPos ?? r.pos ?? "";
+        td.classList.add("col-pos");
+      } else if (col.key === "ultims"){
+        td.appendChild(renderForm(r[col.key]));
+      } else {
+        td.textContent = String(r[col.key] ?? "").trim();
+      }
+
+      tr.appendChild(td);
+    }
+
+    elRows.appendChild(tr);
   }
 
-  tbody.innerHTML = rows.map(r => `
-    <tr>
-      <td><strong>${r.pos}</strong></td>
-      <td>${escapeHtml(r.nom)}</td>
-      <td><strong>${r.punts}</strong></td>
-    </tr>
-  `).join("");
+  setStatus(
+    state.filtered.length
+      ? `Mostrant ${state.filtered.length} registre(s).`
+      : "No hi ha resultats amb aquest filtre.",
+    state.filtered.length ? "ok" : "warn"
+  );
 }
 
-function escapeHtml(str){
-  return String(str)
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-}
+function renderForm(value){
+  const wrap = document.createElement("div");
+  wrap.className = "form-chips";
 
-async function init(){
-  try{
-    const res = await fetch(csvUrl, { cache: "no-store" });
-    if(!res.ok) throw new Error("HTTP " + res.status);
+  // Accepta formats: "E G E P G" o "E,G,E,P,G" o "EGEPG"
+  const raw = String(value ?? "").trim();
+  if (!raw) return wrap;
 
-    const text = await res.text();
-    data = parseCSV(text);
-    render();
-  } catch(e){
-    console.error("Error carregant CSV:", e);
-    tbody.innerHTML = `<tr><td colspan="3" style="padding:14px;color:#ffb3b3">
-      Error carregant dades del full (mira la consola F12). ${escapeHtml(e.message)}
-    </td></tr>`;
+  let items = raw.split(/\s+|,|\|/).filter(Boolean);
+  if (items.length === 1 && items[0].length > 1){
+    items = items[0].split("");
   }
+
+  for (const it of items.slice(0,5)){
+    const s = it.trim().toUpperCase();
+    const chip = document.createElement("span");
+    chip.className = "chip chip--" + s;
+    chip.textContent = s;
+    wrap.appendChild(chip);
+  }
+  return wrap;
 }
 
-q.addEventListener("input", render);
+function updateToggleText(){
+  elToggle.textContent = (state.sortBy === "punts") ? "Ordena per posició" : "Ordena per punts";
+}
 
-toggleSort.addEventListener("click", () => {
-  sortByPoints = !sortByPoints;
-  toggleSort.textContent = sortByPoints ? "Ordena per posició" : "Ordena per punts";
+elQ.addEventListener("input", () => render());
+elToggle.addEventListener("click", () => {
+  state.sortBy = (state.sortBy === "pos") ? "punts" : "pos";
+  updateToggleText();
   render();
 });
 
-// recàrrega automàtica cada 2 minuts (opcional)
-setInterval(init, 120000);
-
-init();
+(async function init(){
+  try{
+    state.raw = await loadData();
+    buildHead();
+    updateToggleText();
+    render();
+  } catch (e){
+    console.error("Error carregant dades:", e);
+    setStatus(`Error carregant dades del full. ${e.message || e} (mira la consola F12).`, "error");
+  }
+})();
 </script>
-
-
-
 
 </body>
 </html>
