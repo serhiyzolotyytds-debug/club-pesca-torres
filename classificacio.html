@@ -104,23 +104,6 @@ SHEETS.forEach((s, i) => {
   select.appendChild(opt);
 });
 
-// Quan canvies de full
-select.addEventListener("change", () => {
-  loadAndRender(select.value);
-});
-
-// Carregar el primer full
-loadAndRender(select.value);
-
-async function loadAndRender(gid){
-  const url = csvUrlFor(gid);
-
-  const res = await fetch(url);
-  const text = await res.text();
-
-  // ⚠️ Aquí has de cridar la teva funció que ja pinta la taula
-  render(text);
-}
 
 /** ====== CSV PARSER (sense llibreries) ====== */
 function parseCSV(text){
@@ -208,35 +191,46 @@ function setStatus(msg, type="info"){
   elStatus.className = "notice notice--" + type;
 }
 
-async function loadData(){
+async function loadData(gid){
   setStatus("Carregant classificació…", "info");
-  const res = await fetch(csvUrl, { cache: "no-store" });
+  const url = csvUrlFor(gid);
+
+  const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const text = await res.text();
 
   const table = parseCSV(text);
   if (!table.length) return [];
 
-  const headers = table[0];
-  const body = table.slice(1);
+  // 🔎 Troba automàticament la fila de capçalera (per fulls que tenen títols a dalt)
+  let headerRowIndex = 0;
+  let headers = table[0];
+
+  const wanted = ["nom", "punts", "puntuacio", "puntuacio final", "posicio", "posició"];
+  for (let r = 0; r < Math.min(10, table.length); r++){
+    const row = table[r].map(normalizeHeader);
+    const hits = wanted.filter(w => row.includes(normalizeHeader(w))).length;
+    if (hits >= 2){ headerRowIndex = r; headers = table[r]; break; }
+  }
+
+  const body = table.slice(headerRowIndex + 1);
 
   // Map de columnes pel nom
   const idx = new Map();
   headers.forEach((h, i) => idx.set(normalizeHeader(h), i));
 
-  // Claus “típiques” (pots posar-les al teu full amb aquests noms o semblants)
   const candidates = [
-    { key:"pos", labels:["p","pos","posicio","posicio final","posició","posició final"], fallbackIndex:0 },
-    { key:"nom", labels:["nom","pescador","equip","equips","participant"], fallbackIndex:1 },
-    { key:"punts", labels:["punts","puntuacio","puntuacio final","puntuació","puntuació final","total"], fallbackIndex:2 },
+    { key:"pos", labels:["p","pos","posicio","posició"], fallbackIndex:0 },
+    { key:"nom", labels:["nom","pescador","participant"], fallbackIndex:1 },
+    { key:"punts", labels:["punts","puntuacio","puntuació","puntuacio final","puntuació final","total"], fallbackIndex:2 },
     { key:"coeficient", labels:["coeficient","coef","coef."], optional:true },
     { key:"j", labels:["j","partits","pj"], optional:true },
     { key:"g", labels:["g","guanyats","pg"], optional:true },
     { key:"e", labels:["e","empats","pe"], optional:true },
     { key:"p", labels:["p","perduts","pp"], optional:true },
-    { key:"gf", labels:["gf","f","gols a favor","favor"], optional:true },
-    { key:"gc", labels:["gc","c","gols en contra","contra"], optional:true },
-    { key:"ultims", labels:["ultims","últims","forma","ultims 5","últims 5"], optional:true }
+    { key:"gf", labels:["gf","f","favor"], optional:true },
+    { key:"gc", labels:["gc","c","contra"], optional:true },
+    { key:"ultims", labels:["ultims","últims","forma"], optional:true }
   ];
 
   function findIndexFor(c){
@@ -244,7 +238,6 @@ async function loadData(){
       const k = normalizeHeader(l);
       if (idx.has(k)) return idx.get(k);
     }
-    // fallback per pos/nom/punts si el full no té capçalera clara
     if (c.fallbackIndex != null && c.fallbackIndex < headers.length) return c.fallbackIndex;
     return null;
   }
@@ -258,6 +251,44 @@ async function loadData(){
       colIndex[c.key] = i;
     }
   }
+
+  const visible = [
+    {key:"pos", label:"P"},
+    {key:"nom", label:"NOM"},
+    {key:"punts", label:"PUNTS"}
+  ];
+
+  const extraOrder = [
+    {key:"coeficient", label:"COEF."},
+    {key:"j", label:"J"},
+    {key:"g", label:"G"},
+    {key:"e", label:"E"},
+    {key:"p", label:"P"},
+    {key:"gf", label:"F"},
+    {key:"gc", label:"C"},
+    {key:"ultims", label:"ÚLTIMS"}
+  ];
+  for (const ex of extraOrder){
+    if (colIndex[ex.key] != null) visible.push(ex);
+  }
+
+  const data = body.map(r => {
+    const obj = {};
+    for (const col of visible){
+      const i = colIndex[col.key];
+      obj[col.key] = (i != null ? (r[i] ?? "") : "");
+    }
+    obj.posNum = toNumber(obj.pos);
+    obj.puntsNum = toNumber(obj.punts);
+    return obj;
+  })
+  // ✅ filtra files “bones”: nom no buit i punts numèrics
+  .filter(o => String(o.nom || "").trim() !== "" && (o.puntsNum != null));
+
+  state.columns = visible;
+  return data;
+}
+
 
   // Defineix columnes visibles en ordre (estil “lliga”)
   const visible = [
