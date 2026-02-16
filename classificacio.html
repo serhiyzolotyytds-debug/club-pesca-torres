@@ -100,8 +100,10 @@ SHEETS.forEach((s, i) => {
   const opt = document.createElement("option");
   opt.value = s.gid;
   opt.textContent = s.name;
-  if(i === 0) opt.selected = true;
+  if (i === 0) opt.selected = true;
   select.appendChild(opt);
+});
+
 async function reloadCurrent(){
   try{
     state.raw = await loadData(select.value);
@@ -116,15 +118,6 @@ async function reloadCurrent(){
 
 // Quan canvies la competició
 select.addEventListener("change", reloadCurrent);
-
-// Carrega la primera en entrar a la pàgina
-(async function init(){
-  updateToggleText();
-  await reloadCurrent();
-})();
-
-});
-
 
 /** ====== CSV PARSER (sense llibreries) ====== */
 function parseCSV(text){
