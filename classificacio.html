@@ -102,6 +102,27 @@ SHEETS.forEach((s, i) => {
   opt.textContent = s.name;
   if(i === 0) opt.selected = true;
   select.appendChild(opt);
+async function reloadCurrent(){
+  try{
+    state.raw = await loadData(select.value);
+    buildHead();
+    updateToggleText();
+    render();
+  } catch (e){
+    console.error("Error carregant dades:", e);
+    setStatus(`Error carregant dades del full. ${e.message || e}`, "error");
+  }
+}
+
+// Quan canvies la competició
+select.addEventListener("change", reloadCurrent);
+
+// Carrega la primera en entrar a la pàgina
+(async function init(){
+  updateToggleText();
+  await reloadCurrent();
+})();
+
 });
 
 
