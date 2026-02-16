@@ -464,16 +464,10 @@ elToggle.addEventListener("click", () => {
 });
 
 (async function init(){
-  try{
-    state.raw = await loadData();
-    buildHead();
-    updateToggleText();
-    render();
-  } catch (e){
-    console.error("Error carregant dades:", e);
-    setStatus(`Error carregant dades del full. ${e.message || e} (mira la consola F12).`, "error");
-  }
+  updateToggleText();
+  await reloadCurrent();
 })();
+
 </script>
 
 </body>
