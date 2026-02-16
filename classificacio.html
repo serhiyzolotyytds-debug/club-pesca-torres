@@ -73,10 +73,20 @@
  *  Posa aquí el teu Sheet ID i el GID de la pestanya (ja te'l deixo preparat).
  */
 const SHEET_ID = "19E7UR9NOwXsJEPvtA0gyBtxeqC-T6-fML9LzM7mL53Q";
-const GID = "270978965";
 
-// URL correcta per llegir dades (CSV)
-const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`;
+const SHEETS = [
+  { name: "Fi de temporada", gid: "270978965" },
+  { name: "Open Utxesa I", gid: "XXXXXXXXX" },
+  { name: "Open Utxesa II", gid: "XXXXXXXXX" },
+  { name: "Open Riba-roja d'Ebre", gid: "XXXXXXXXX" },
+  { name: "Open La Granja d'Escarp", gid: "XXXXXXXXX" },
+  { name: "Open Oliana", gid: "XXXXXXXXX" },
+];
+
+function csvUrlFor(gid){
+  return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}`;
+}
+
 
 /** ====== CSV PARSER (sense llibreries) ====== */
 function parseCSV(text){
