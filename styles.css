@@ -375,3 +375,7 @@ footer {
 .pro-table th:nth-child(1), .pro-table td:nth-child(1) { width: 70px; }
 .pro-table th:nth-child(2), .pro-table td:nth-child(2) { width: auto; }
 .pro-table th:nth-child(3), .pro-table td:nth-child(3) { width: 170px; text-align: right; }
+
+.tips { 
+  display: none !important; 
+}
