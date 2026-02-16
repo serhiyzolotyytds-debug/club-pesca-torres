@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Classificació oficial del Club de Pesca Torres de Segre."/>
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="styles.css?v=2" />
+  <link rel="stylesheet" href="styles.css?v=3" />
 </head>
 
 <body>
@@ -23,6 +23,8 @@
         <a href="botiga.html">Botiga</a>
         <a href="galeria.html">Galeria</a>
         <a href="contacte.html">Contacte</a>
+        <a class="nav-cta" href="contacte.html">Inscripcions</a>
+      
       </div>
     </nav>
   </div>
@@ -55,9 +57,45 @@
   </section>
 </main>
 
-<footer>
-  Club de Pesca Torres de Segre · Temporada 2026
+<footer class="site-footer">
+  <div class="container footer-grid">
+    <div class="footer-col">
+      <div class="footer-brand">🎣 Club de Pesca Torres de Segre</div>
+      <p class="footer-note">Lliga oficial · captura i alliberament · escenaris de la zona.</p>
+      <div class="footer-badges">
+        <span class="pill">Captura &amp; alliberament</span>
+        <span class="pill">Competició individual</span>
+      </div>
+    </div>
+
+    <div class="footer-col">
+      <div class="footer-title">Enllaços</div>
+      <a href="classificacio.html">Classificació</a>
+      <a href="calendari.html">Calendari</a>
+      <a href="normes.html">Normes</a>
+      <a href="galeria.html">Galeria</a>
+      <a href="botiga.html">Botiga</a>
+      <a href="contacte.html">Contacte</a>
+    </div>
+
+    <div class="footer-col">
+      <div class="footer-title">Contacte</div>
+      <p class="footer-line"><strong>Correu:</strong> clubpescatorresdesegre@gmail.com</p>
+      <p class="footer-line"><strong>Zona:</strong> Torres de Segre · Utxesa · Segre–Cinca</p>
+      <div class="footer-actions">
+        <a class="btn primary" href="contacte.html">Inscripcions</a>
+        <a class="btn ghost" href="botiga.html">Botiga</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="container footer-bottom">
+    <span>© <span id="y"></span> Club de Pesca Torres de Segre</span>
+    <span class="sep">·</span>
+    <span>Disseny web estàtica (GitHub Pages)</span>
+  </div>
 </footer>
+<script>document.getElementById("y").textContent=new Date().getFullYear();</script>
 
 <script>
 /** ====== CONFIG ======
